@@ -6,6 +6,10 @@
 ## RUNNING RANDOM SCRIPTS YOU FOUND FROM THE INTERNET IS NEVER A GOOD IDEA SO MAKE SURE TO BE ON THE LOOKOUT
 
 
+# How to Use:
+- Download both the PCCleaner.ps1 and Run_PCCleaner.bat and place both in the same folder.
+- then run the Run_PCCleaner.bat
+
 ## Standard
 - Automatically cleans up common junk Windows leaves behind:
 Temporary files your PC created and never cleaned up
@@ -42,9 +46,7 @@ Runs a Windows system file check to find and flag any corrupted files
 ## Full Nuke
 - Runs everything stated above automatically
 
-# How to Use:
-- Download both the PCCleaner.ps1 and Run_PCCleaner.bat and place both in the same folder.
-- then run the Run_PCCleaner.bat
+
 
 
 
