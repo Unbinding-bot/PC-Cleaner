@@ -1,5 +1,5 @@
-﻿# PC Deep Cleaner v3.2
-# Run via Run_PCCleaner.bat (handles admin elevation automatically)
+# PC Deep Cleaner v3.2
+# Run via Run_PCCleaner.bat
 
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName PresentationCore
@@ -97,7 +97,7 @@ Add-Type -AssemblyName WindowsBase
           </Border>
           <Button Name="btnRun"   Content="Run Selected Mode" Padding="10,8" Margin="0,0,4,0"
                   FontSize="12" IsEnabled="False"/>
-          <Button Name="btnNukeContinue" Content="&#x2714; Done reviewing — continue Full Nuke"
+          <Button Name="btnNukeContinue" Content="&#x2714; Done reviewing continue Full Nuke"
                   Padding="8,8" Margin="0,0,4,0" Visibility="Collapsed"
                   Background="#2E7D32" Foreground="White" FontWeight="Bold"/>
           <Button Name="btnClear" Content="Clear Log" Padding="8,8" Margin="0,0,4,0"/>
@@ -110,7 +110,7 @@ Add-Type -AssemblyName WindowsBase
     <Border Grid.Row="3" Name="pnlAdminWarn" BorderBrush="DarkOrange"
             BorderThickness="1" Padding="6,4" Margin="0,6,0,0"
             Visibility="Collapsed">
-      <TextBlock Text="Not running as Administrator — some operations will be skipped. Use Run_PCCleaner.bat to auto-elevate."
+      <TextBlock Text="Not running as Administrator some operations will be skipped. Use Run_PCCleaner.bat to auto-elevate."
                  FontSize="10" Foreground="DarkOrange" TextWrapping="Wrap"/>
     </Border>
 
@@ -224,8 +224,8 @@ function SelectCard {
     $script:mode = $m
     $desc = @{
         Standard = 'Standard: Temp files, caches, update cache, browser cache, recycle bin, DISM cleanup'
-        Deep     = 'Deep Scan: Finds large and old files. Interactive — you pick what to delete.'
-        Apps     = 'App Reviewer: Finds installed programs not used in 90+ days. Review and uninstall interactively.'
+        Deep     = 'Deep Scan: Finds large and old files. Interactive you pick what to delete.'
+        Apps     = 'App Reviewer: Finds installed programs not used in 30+ days. Review and uninstall interactively.'
         Speed    = 'Speed Boost: Power plan, visual effects, DNS flush, RAM purge, Game Bar off, SFC scan'
         All      = 'Full Nuke: Runs Standard, Deep Scan (you review files), App Reviewer, then Speed Boost'
     }
@@ -242,7 +242,7 @@ function Run-Standard {
     try {
         $q = & compact.exe /CompactOS:query 2>&1 | Out-String
         if ($q -match 'system is in the Compact state') {
-            LogWarn 'CompactOS already active — skipping.'
+            LogWarn 'CompactOS already active, skipping.'
         } else {
             Log 'OS not compressed. Running CompactOS (may take a few minutes)...'
             SetProgress 'Running CompactOS...' 8
@@ -312,7 +312,7 @@ function Run-Standard {
 
     SetProgress 'Running DISM WinSxS cleanup (may take 5-15 minutes)...' 80
     LogHead 'DISM / WinSxS Component Store'
-    Log 'Please wait — this is the slowest step...'
+    Log 'Please wait, this is the slowest step...'
     try {
         & Dism.exe /online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 |
             ForEach-Object { if ($_ -match '\d+\.\d+%|complete|error') { Log "  DISM: $_" } }
@@ -335,7 +335,7 @@ function Run-Standard {
 function Run-DeepScan {
     LogHead 'DEEP SCAN'
     SetProgress 'Starting smart background scan...' 5
-    Log 'Analysing your drive intelligently — dev tools, SDKs and libraries are protected.'
+    Log 'Analysing your drive intelligently, dev tools, SDKs and libraries are protected.'
     DoEvents
 
     # Scan script runs off the UI thread. Returns PSCustomObjects so file metadata
@@ -541,10 +541,10 @@ function Run-DeepScan {
                     $script:_phaseIdx++
                 }
             }
-            return   # still running — come back next tick
+            return   # still running cum on me next tick
         }
 
-        # Scan finished — collect results
+        # Scan finished collect results
         $timer.Stop()
 
         $all = @($ps.EndInvoke($asyncResult))
@@ -558,12 +558,12 @@ function Run-DeepScan {
         $skipped = ($all | Where-Object { $_.Reason -eq $null }).Count
         Log "Smart scan complete. Found $($all.Count) candidate files (dev/SDK folders protected)."
         if ($all.Count -eq 0) {
-            Log 'Nothing suspicious found — your drive looks clean!'
+            Log 'Nothing suspicious(nice, theres no cp) found your drive looks clean!'
         } else {
             # Group by reason for a quick summary
             $all | Group-Object Reason | ForEach-Object {
                 $totalMB = [math]::Round(($_.Group | Measure-Object Length -Sum).Sum / 1MB, 0)
-                Log "  $($_.Name): $($_.Count) file(s) — ${totalMB} MB"
+                Log "  $($_.Name): $($_.Count) file(s) - ${totalMB} MB"
             }
         }
         SetProgress 'Scan complete.' 85
@@ -581,7 +581,7 @@ function Run-DeepScan {
         $btnDelete.Visibility    = 'Collapsed'
         $btnSwipeMode.Visibility = 'Collapsed'
         SetProgress 'Scan done! Opening File Reviewer...' 100
-        LogHead 'DEEP SCAN COMPLETE — opening reviewer'
+        LogHead 'DEEP SCAN COMPLETE, opening reviewer'
         DoEvents
         # Auto-open the reviewer immediately
         if ($script:swipeItems.Count -gt 0) {
@@ -604,7 +604,7 @@ function Run-DeepScan {
 function Run-AppReviewer {
     LogHead 'APP REVIEWER'
     SetProgress 'Scanning installed applications...' 5
-    Log 'Looking for programs that have not been used in 90+ days...'
+    Log 'Looking for programs that have not been used in 30+ days...'
     DoEvents
 
     # Collect installed apps from registry (covers both 32-bit and 64-bit)
@@ -614,7 +614,7 @@ function Run-AppReviewer {
         'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
     )
 
-    # Apps we never flag — system components, runtimes, drivers, security tools
+    # Apps we never flag system components, runtimes, drivers, security tools
     $systemPatterns = @(
         'microsoft visual c\+\+', 'microsoft .net', 'windows sdk', 'windows kits',
         'directx', 'vcredist', 'dotnet', 'windows defender', 'malwarebytes',
@@ -716,7 +716,7 @@ function Run-AppReviewer {
     DoEvents
 
     if ($sorted.Count -eq 0) {
-        Log 'No unused applications found — everything looks actively used!'
+        Log 'No unused applications found, everything looks actively used!'
         SetProgress 'App review done.' 100
         LogHead 'APP REVIEWER COMPLETE'
         return
@@ -793,7 +793,7 @@ function Open-AppReviewer {
         </Grid.RowDefinitions>
         <Border Grid.Row="0" Background="#EEEEEE" BorderBrush="#CCCCCC"
                 BorderThickness="0,0,0,1" Padding="8,5">
-          <TextBlock Text="All unused apps found on this PC — current app highlighted"
+          <TextBlock Text="All unused apps found on this PC, current app highlighted"
                      FontSize="11" Foreground="#333"/>
         </Border>
         <ListBox Name="arList" Grid.Row="1" BorderThickness="0"
@@ -978,7 +978,7 @@ function Open-AppReviewer {
                     }
                     LogOK "Uninstall launched: $appName"
                 } catch {
-                    LogErr "Could not launch uninstaller for $appName — try via Settings > Apps."
+                    LogErr "Could not launch uninstaller for $appName try via Settings > Apps."
                 }
             }
             Log 'All selected uninstallers have been launched.'
@@ -1007,7 +1007,7 @@ function Run-Speed {
         if ($props) {
             $props.PSObject.Properties |
                 Where-Object { $_.Name -notmatch '^PS' -and $_.Name -notin $safeNames } |
-                ForEach-Object { LogWarn "Startup: [$($_.Name)] — review in Task Manager > Startup tab" }
+                ForEach-Object { LogWarn "Startup: [$($_.Name)]  review in Task Manager > Startup tab" }
         }
     }
     LogOK 'Startup audit done.'
@@ -1064,7 +1064,7 @@ public class RamHelper {
             Set-Service  SysMain -StartupType Disabled -ErrorAction SilentlyContinue
             LogOK 'SysMain disabled (HDD detected).'
         } else {
-            LogSkip 'SSD detected — SysMain kept on (beneficial for SSDs).'
+            LogSkip 'SSD detected SysMain kept on (beneficial for SSDs).'
         }
     } catch { LogWarn 'Could not check disk type.' }
 
@@ -1076,7 +1076,7 @@ public class RamHelper {
 
     SetProgress 'Running System File Checker (sfc /scannow)...' 85
     LogHead 'SFC System Scan'
-    Log 'Running sfc /scannow — this can take several minutes...'
+    Log 'Running sfc /scannow this can take several minutes...'
     try {
         $sfc = & sfc /scannow 2>&1 | Out-String
         if ($sfc -match 'did not find any integrity violations') {
@@ -1102,7 +1102,7 @@ $cApps.Add_Click({     SelectCard 'Apps' })
 $cSpeed.Add_Click({    SelectCard 'Speed' })
 $cAll.Add_Click({      SelectCard 'All' })
 
-# File Reviewer — session decisions saved to .tmp for free navigation
+# File Reviewer session decisions saved to .tmp for free navigation, yes im fucking lazy stfu
 $script:sessionFile = [System.IO.Path]::Combine($env:TEMP, 'PCCleaner_review.tmp')
 
 function Save-Decisions {
@@ -1195,7 +1195,7 @@ function Open-FileReviewer {
                  FontFamily="Consolas" FontSize="11"
                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 HorizontalContentAlignment="Left">
+                 HorizontalContentAlignment="Left"
                  IsHitTestVisible="False"/>
       </Grid>
     </Border>
@@ -1257,7 +1257,7 @@ function Open-FileReviewer {
     $rwKeep      = $rwWin.FindName('rwKeep')
     $rwDelete    = $rwWin.FindName('rwDelete')
 
-    # Use $script: vars for mutable state — closures in PS don't capture [ref] reliably
+    # Use $script: vars for mutable state closures in PS don't capture [ref] reliably
     $script:rwItems = $script:swipeItems
     $script:rwIdx   = 0
 
@@ -1450,7 +1450,7 @@ function Open-FileReviewer {
             }
             Log 'Review complete. Deletions committed.'
         } elseif ($ans -eq 'No') {
-            Log "Reviewer closed. $($toDelete.Count) file(s) kept — decisions saved for next time."
+            Log "Reviewer closed. $($toDelete.Count) file(s) kept decisions saved for next time."
         }
     })
 
@@ -1466,7 +1466,7 @@ $btnSwipeMode.Add_Click({
 $btnNukeContinue.Add_Click({
     $script:deepScanDone         = $true
     $btnNukeContinue.Visibility  = 'Collapsed'
-    Log 'Review complete — continuing Full Nuke with Speed Boost...'
+    Log 'Review complete continuing Full Nuke with Speed Boost...'
     DoEvents
 })
 
@@ -1496,7 +1496,7 @@ $btnRun.Add_Click({
 
                 $script:deepScanDone        = $true
                 $btnNukeContinue.Visibility = 'Collapsed'
-                Log 'Review complete — continuing Full Nuke with App Reviewer...'
+                Log 'Review complete continuing Full Nuke with App Reviewer...'
                 DoEvents
 
                 Run-AppReviewer
